@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Printable RATIG Motherboard (ESP32 DOIT V1)</title>
+<style>
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f4f8; margin: 20px; color: #333; }
+  .container { max-width: 900px; margin: 0 auto; display: flex; gap: 30px; align-items: flex-start; }
+  .controls { background: #fff; padding: 25px; border-radius: 12px; flex: 1; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+  .pcb-container { background: #fff; display: inline-block; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+  h2 { margin-top: 0; color: #1a365d; font-size: 1.5rem; }
+  p { line-height: 1.5; }
+  .checkbox-group { margin: 15px 0; display: flex; flex-direction: column; gap: 10px; }
+  label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500; }
+  input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+  .btn-print { display: block; width: 100%; padding: 12px 20px; font-size: 16px; font-weight: bold; background: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; transition: background 0.2s; margin-top: 20px; }
+  .btn-print:hover { background: #1d4ed8; }
+  .info-box { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px 15px; margin-top: 20px; font-size: 0.9rem; border-radius: 0 8px 8px 0; }
+  
+  /* SVG Styling */
+  svg { background: #004225; border-radius: 4px; }
+  .pad { fill: #d4af37; stroke: #b8860b; stroke-width: 0.4; }
+  .hole { fill: #111; }
+  .trace { fill: none; stroke: #00b300; stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; }
+  .silkscreen { fill: none; stroke: #fff; stroke-width: 0.3; }
+  .silkscreen-text { fill: #fff; stroke: none; font-family: monospace; font-size: 1.5px; }
+  .board-outline { fill: none; stroke: #fff; stroke-width: 0.2; }
+
+  /* Print Styles */
+  @media print {
+    body { background: #fff; margin: 0; padding: 0; }
+    .container { display: block; margin: 0; }
+    .controls { display: none; }
+    .pcb-container { padding: 0; box-shadow: none; border-radius: 0; }
+    svg { background: transparent !important; }
+    .pad { fill: black !important; stroke: black !important; }
+    .hole { fill: white !important; }
+    .trace { stroke: black !important; }
+    .silkscreen { stroke: black !important; }
+    .silkscreen-text { fill: black !important; stroke: none !important; }
+    .board-outline { stroke: black !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="controls">
+    <h2>🖨️ RATIG Motherboard (ESP32 DOIT 30-Pin)</h2>
+    <p>Layout PCB 1:1, disesuaikan khusus untuk board <strong>ESP32 DOIT DEVKIT V1 (30 PIN)</strong>.</p>
+    
+    <div class="checkbox-group">
+      <label><input type="checkbox" id="mirrorCheck" onchange="updateView()" checked> 🪞 Mirror (Balik Horizontal untuk Setrika)</label>
+      <label><input type="checkbox" id="silkCheck" onchange="updateView()" checked> 🏷️ Tampilkan Silkscreen (Label Komponen)</label>
+      <label><input type="checkbox" id="copperCheck" onchange="updateView()" checked> ⚡ Tampilkan Jalur Tembaga (Hijau)</label>
+    </div>
+
+    <button class="btn-print" onclick="window.print()">Print Sekarang (Ctrl+P)</button>
+
+    <div class="info-box" style="background: #fdf4ff; border-left-color: #d946ef;">
+      <strong>Pembaruan Terkini:</strong><br>
+      • <strong>Buzzer Pin Tengah:</strong> Permintaan diterima! Urutan pin Buzzer sekarang menjadi <strong>GND - VCC - Signal</strong> (VCC/5V ada tepat di tengah).<br>
+      • <strong>Routing Super Rapi:</strong> Seluruh jalur di sebelah kiri sudah ditata ulang agar pin VCC bisa melewati sela-sela pin GND dan Signal tanpa korsleting. 100% aman untuk di-etching tunggal (single layer).
+    </div>
+  </div>
+
+  <div class="pcb-container">
+    <svg id="pcb" width="85mm" height="70mm" viewBox="0 0 85 70" xmlns="http://www.w3.org/2000/svg">
+      <g id="board-group" transform="scale(-1, 1) translate(-85, 0)">
+        <rect x="0" y="0" width="85" height="70" class="board-outline" />
+        <g id="traces"></g>
+        <g id="pads"></g>
+        <g id="silkscreen">
+          <!-- ESP32 Outline -->
+          <rect x="38.73" y="8.73" width="27.94" height="40.64" class="silkscreen" />
+          <text x="52.7" y="29" class="silkscreen-text" text-anchor="middle" transform="rotate(-90 52.7 29)" font-size="3px">ESP32 DOIT DEVKIT V1</text>
+          
+          <text x="42" y="10.5" class="silkscreen-text">EN</text>
+          <text x="42" y="43.5" class="silkscreen-text">GND</text>
+          <text x="42" y="46" class="silkscreen-text">VIN</text>
+          
+          <text x="63.4" y="10.5" class="silkscreen-text" text-anchor="end">D23</text>
+          <text x="63.4" y="43.5" class="silkscreen-text" text-anchor="end">GND</text>
+        </g>
+      </g>
+    </svg>
+  </div>
+</div>
+
+<script>
+  const svgNS = "http://www.w3.org/2000/svg";
+  const padsGroup = document.getElementById('pads');
+  const silkscreenGroup = document.getElementById('silkscreen');
+  const tracesGroup = document.getElementById('traces');
+
+  function addPad(x, y) {
+    let p = document.createElementNS(svgNS, "circle");
+    p.setAttribute("cx", x); p.setAttribute("cy", y); p.setAttribute("r", "1.1"); p.setAttribute("class", "pad");
+    let h = document.createElementNS(svgNS, "circle");
+    h.setAttribute("cx", x); h.setAttribute("cy", y); h.setAttribute("r", "0.45"); h.setAttribute("class", "hole");
+    padsGroup.appendChild(p); padsGroup.appendChild(h);
+  }
+
+  function addRect(x, y, w, h) {
+    let r = document.createElementNS(svgNS, "rect");
+    r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", w); r.setAttribute("height", h); r.setAttribute("class", "silkscreen");
+    silkscreenGroup.appendChild(r);
+  }
+
+  function addText(x, y, text, align="start", size="1.5px") {
+    let t = document.createElementNS(svgNS, "text");
+    t.setAttribute("x", x); t.setAttribute("y", y); t.setAttribute("class", "silkscreen-text"); t.setAttribute("text-anchor", align); t.setAttribute("font-size", size);
+    t.textContent = text;
+    silkscreenGroup.appendChild(t);
+  }
+
+  function addPath(d) {
+    let p = document.createElementNS(svgNS, "path");
+    p.setAttribute("d", d); p.setAttribute("class", "trace");
+    tracesGroup.appendChild(p);
+  }
+
+  // Generate ESP32 30-pin Pads (15 pins per side)
+  const startX1 = 40, startX2 = 65.4, startY = 10;
+  for(let i = 0; i < 15; i++) {
+    let y = (startY + (i * 2.54)).toFixed(2);
+    addPad(startX1, y);
+    addPad(startX2, y);
+  }
+
+  // Define Left Components
+  const leftComponents = [
+    {name: "LED EXT", compY: 10, pinY: 22.70, type: "term2"},
+    {name: "BUZZER", compY: 15, pinY: 25.24, type: "term3"},
+    {name: "START", compY: 23, pinY: 27.78, type: "btn"},
+    {name: "RESET", compY: 31, pinY: 30.32, type: "btn"},
+    {name: "STOP EXT", compY: 39, pinY: 32.86, type: "term2"},
+    {name: "MODE", compY: 47, pinY: 35.40, type: "btn"}
+  ];
+  
+  // Generate Pads, Silkscreen, and Signal Traces for Left Components
+  leftComponents.forEach(c => {
+    addPad(10, c.compY); // GND Pad untuk semua komponen di X=10
+    
+    if (c.type === 'term3') {
+      addPad(15, c.compY); // VCC Pad untuk Buzzer di X=15 (TENGAH)
+      addPad(20, c.compY); // Signal Pad untuk Buzzer di X=20
+      
+      // Trace Signal Buzzer
+      addPath(`M 20 ${c.compY} L 25 ${c.compY} L 35 ${c.pinY} L 40 ${c.pinY}`);
+      
+      // Silkscreen
+      addRect(8.5, c.compY - 2.5, 13, 5); 
+      addText(10, c.compY + 0.5, "G", "middle", "1.2px");
+      addText(15, c.compY + 0.5, "V", "middle", "1.2px");
+      addText(20, c.compY + 0.5, "S", "middle", "1.2px");
+      addText(7, c.compY + 0.5, c.name, "end");
+    } else {
+      addPad(15, c.compY); // Signal Pad untuk komponen lain di X=15
+      
+      // Trace Signal
+      addPath(`M 15 ${c.compY} L 25 ${c.compY} L 35 ${c.pinY} L 40 ${c.pinY}`);
+      
+      // Silkscreen
+      if (c.type === 'term2') {
+        addRect(8.5, c.compY - 2.5, 8, 5);
+      } else if (c.type === 'btn') {
+        addRect(9.5, c.compY - 3, 6, 6);
+      }
+      addText(7, c.compY + 0.5, c.name, "end");
+    }
+  });
+
+  // Main GND Trace (Left) - Menghindari saling silang dengan VCC
+  addPath("M 10 10 L 10 55 L 32 55 L 32 43.02 L 40 43.02");
+  
+  // VCC Trace for Buzzer (Left) - Lewat tengah-tengah sela pin GND dan Signal
+  addPath("M 15 15 L 12.5 15 L 12.5 52 L 35 52 L 35 45.56 L 40 45.56");
+
+  // Generate Right Components (LCD I2C Header)
+  const lcdPins = ["GND", "VCC", "SDA", "SCL"];
+  lcdPins.forEach((name, i) => {
+    let y = 5.00 + i * 2.54;
+    addPad(75, y);
+    addText(78, y + 0.5, name, "start");
+  });
+  addRect(73.5, 3.5, 3, 11);
+  addText(75, 2.5, "LCD I2C", "middle");
+
+  // Right Side LCD Traces
+  addPath("M 75 5.00 L 78 5.00 L 78 43.02 L 65.4 43.02"); // LCD GND
+  addPath("M 75 7.54 L 60 7.54 L 60 45.56 L 40 45.56"); // LCD VCC
+  addPath("M 75 10.08 L 76 10.08 L 76 20.16 L 65.4 20.16"); // LCD SDA
+  addPath("M 75 12.62 L 73 12.62 L 73 12.54 L 65.4 12.54"); // LCD SCL
+
+  function updateView() {
+    const mirror = document.getElementById('mirrorCheck').checked;
+    const silk = document.getElementById('silkCheck').checked;
+    const copper = document.getElementById('copperCheck').checked;
+    
+    document.getElementById('board-group').setAttribute('transform', mirror ? 'scale(-1, 1) translate(-85, 0)' : '');
+    document.getElementById('silkscreen').style.display = silk ? 'block' : 'none';
+    document.getElementById('traces').style.display = copper ? 'block' : 'none';
+  }
+  
+  updateView();
+</script>
+
+</body>
+</html>

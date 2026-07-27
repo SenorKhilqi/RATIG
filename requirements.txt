@@ -1,0 +1,7 @@
+pyserial
+pandas
+openpyxl
+matplotlib
+fpdf2
+pyinstaller
+numpy
